@@ -1,43 +1,36 @@
 #!/usr/bin/python3
+"""Script to get todos for a user from API"""
+
 import requests
 import sys
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: {} EMPLOYEE_ID".format(sys.argv[0]))
-        sys.exit(1)
 
-    try:
-        employee_id = int(sys.argv[1])
-    except ValueError:
-        print("Employee ID must be an integer")
-        sys.exit(1)
+def main():
+    """main function"""
+    user_id = int(sys.argv[1])
+    todo_url = 'https://jsonplaceholder.typicode.com/todos'
+    user_url = 'https://jsonplaceholder.typicode.com/users/{}'.format(user_id)
 
-    base_url = "https://jsonplaceholder.typicode.com"
+    response = requests.get(todo_url)
 
-    # Get user information
-    user_url = "{}/users/{}".format(base_url, employee_id)
-    user_response = requests.get(user_url)
-    if user_response.status_code != 200:
-        print("Employee not found.")
-        sys.exit(1)
+    total_questions = 0
+    completed = []
+    for todo in response.json():
 
-    user_data = user_response.json()
-    employee_name = user_data.get("name")
+        if todo['userId'] == user_id:
+            total_questions += 1
 
-    # Get TODO list for user
-    todos_url = "{}/todos?userId={}".format(base_url, employee_id)
-    todos_response = requests.get(todos_url)
-    todos = todos_response.json()
+            if todo['completed']:
+                completed.append(todo['title'])
 
-    # Filter completed tasks
-    completed_tasks = [task for task in todos if task.get("completed") is True]
+    user_name = requests.get(user_url).json()['name']
 
-    # Print required output
-    print("Employee {} is done with tasks({}/{}):".format(
-        employee_name, len(completed_tasks), len(todos)
-    ))
+    printer = ("Employee {} is done with tasks({}/{}):".format(user_name,
+               len(completed), total_questions))
+    print(printer)
+    for q in completed:
+        print("\t {}".format(q))
 
-    for task in completed_tasks:
-        print("\t {}".format(task.get("title")))
 
+if __name__ == '__main__':
+    main()
